@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú Interactivo</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        /* DISEÑO ELEGANTE Y MOBILE-FIRST */
+        :root {
+            --primary-color: #000000;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #666666;
+        }
+        
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            color: var(--text-main);
+        }
+
+        #app {
+            max-width: 600px; /* Tamaño ideal para móviles y centrado en PC */
+            margin: 0 auto;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+        }
+
+        /* Cabecera del Restaurante */
+        .header {
+            background-color: var(--card-bg);
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 1px solid #eaeaea;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .header img {
+            max-width: 100px;
+            border-radius: 50%;
+            margin-bottom: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* Mensajes de Error / Inactivo */
+        .error-message {
+            text-align: center;
+            padding: 50px 20px;
+            font-size: 18px;
+            color: var(--text-muted);
+        }
+
+        /* Contenedor del Menú */
+        .menu-container {
+            padding: 20px;
+        }
+
+        .category-title {
+            font-size: 20px;
+            margin: 30px 0 15px 0;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 5px;
+            display: inline-block;
+        }
+
+        /* Tarjeta de Plato Elegante */
+        .menu-item {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+            transition: transform 0.2s ease;
+        }
+        
+        .item-info {
+            flex: 1;
+        }
+
+        .item-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+        }
+
+        .item-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin: 0 0 8px 0;
+            line-height: 1.4;
+        }
+
+        .item-ingredients {
+            font-size: 11px;
+            color: #888;
+            font-style: italic;
+            margin: 0 0 10px 0;
+        }
+
+        .item-price {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .item-image {
+            width: 90px;
+            height: 90px;
+            border-radius: 8px;
+            object-fit: cover;
+            background-color: #eee;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <div class="error-message">Cargando menú...</div>
+    </div>
+
+    <script>
+        // 1. CONEXIÓN A TU BASE DE DATOS (Tus credenciales)
+        const supabaseUrl = 'https://odsimxagdhrlagjsrdla.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kc2lteGFnZGhybGFnanNyZGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODgyMDQsImV4cCI6MjA4OTk2NDIwNH0.wRjw_2l9NgyV1R6M71NIqxkZflGvhWKJ5smcGj5oF1c';
+        const supabase = supabaseClient.createClient(supabaseUrl, supabaseKey);
+
+        const appDiv = document.getElementById('app');
+
+        // 2. OBTENER EL ENLACE ÚNICO (El "slug" del QR)
+        // Ejemplo de URL: tusitio.com/?menu=pizzeria-mario
+        const urlParams = new URLSearchParams(window.location.search);
+        const restaurantSlug = urlParams.get('menu');
+
+        async function loadMenu() {
+            if (!restaurantSlug) {
+                appDiv.innerHTML = '<div class="error-message">Por favor, escanea un código QR válido.</div>';
+                return;
+            }
+
+            // 3. BUSCAR EL RESTAURANTE Y VERIFICAR SI ESTÁ ACTIVO
+            const { data: restaurant, error: restError } = await supabase
+                .from('restaurants')
+                .select('*')
+                .eq('slug', restaurantSlug)
+                .single();
+
+            if (restError || !restaurant) {
+                appDiv.innerHTML = '<div class="error-message">Restaurante no encontrado.</div>';
+                return;
+            }
+
+            if (!restaurant.is_active) {
+                // AQUÍ CANCELAS LA PÁGINA PÚBLICA (Si no pagan o cierran)
+                appDiv.innerHTML = '<div class="error-message">El menú de este establecimiento no se encuentra disponible actualmente.</div>';
+                return;
+            }
+
+            // 4. APLICAR EL COLOR DEL CLIENTE
+            document.documentElement.style.setProperty('--primary-color', restaurant.theme_color || '#000000');
+
+            // 5. TRAER CATEGORÍAS Y PLATOS
+            const { data: categories } = await supabase
+                .from('categories')
+                .select('*')
+                .eq('restaurant_id', restaurant.id)
+                .order('sort_order', { ascending: true });
+
+            const { data: items } = await supabase
+                .from('menu_items')
+                .select('*')
+                .eq('is_available', true)
+                .order('sort_order', { ascending: true });
+
+            // 6. DIBUJAR LA PÁGINA (RENDERIZADO)
+            let html = `
+                <div class="header">
+                    ${restaurant.logo_url ? `<img src="${restaurant.logo_url}" alt="${restaurant.name}">` : ''}
+                    <h1>${restaurant.name}</h1>
+                </div>
+                <div class="menu-container">
+            `;
+
+            if (categories && categories.length > 0) {
+                categories.forEach(category => {
+                    // Filtrar platos de esta categoría
+                    const categoryItems = items.filter(item => item.category_id === category.id);
+                    
+                    if (categoryItems.length > 0) {
+                        html += `<h2 class="category-title">${category.name}</h2>`;
+                        
+                        categoryItems.forEach(item => {
+                            // Usamos "description" para la descripción e ingredientes.
+                            html += `
+                                <div class="menu-item">
+                                    <div class="item-info">
+                                        <h3 class="item-name">${item.name}</h3>
+                                        <p class="item-desc">${item.description || ''}</p>
+                                        <div class="item-price">$${item.price.toFixed(2)}</div>
+                                    </div>
+                                    ${item.image_url ? `<img src="${item.image_url}" class="item-image" alt="${item.name}">` : ''}
+                                </div>
+                            `;
+                        });
+                    }
+                });
+            } else {
+                html += '<div class="error-message">Este menú aún no tiene platos.</div>';
+            }
+
+            html += '</div>';
+            appDiv.innerHTML = html;
+        }
+
+        // Iniciar la carga
+        loadMenu();
+    </script>
+</body>
+</html>
