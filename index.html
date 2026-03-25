@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menú Interactivo</title>
+    
+    <link rel="icon" href="data:,">
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
@@ -100,13 +103,6 @@
             line-height: 1.4;
         }
 
-        .item-ingredients {
-            font-size: 11px;
-            color: #888;
-            font-style: italic;
-            margin: 0 0 10px 0;
-        }
-
         .item-price {
             font-size: 16px;
             font-weight: bold;
@@ -129,59 +125,63 @@
     </div>
 
     <script>
-        // 1. CONEXIÓN A TU BASE DE DATOS (Tus credenciales)
+        // 1. CONEXIÓN A TU BASE DE DATOS
         const supabaseUrl = 'https://odsimxagdhrlagjsrdla.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kc2lteGFnZGhybGFnanNyZGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODgyMDQsImV4cCI6MjA4OTk2NDIwNH0.wRjw_2l9NgyV1R6M71NIqxkZflGvhWKJ5smcGj5oF1c';
-        const supabase = supabaseClient.createClient(supabaseUrl, supabaseKey);
+        
+        // Usamos "db" para evitar el conflicto en la consola
+        const db = supabase.createClient(supabaseUrl, supabaseKey);
 
         const appDiv = document.getElementById('app');
 
-        // 2. OBTENER EL ENLACE ÚNICO (El "slug" del QR)
-        // Ejemplo de URL: tusitio.com/?menu=pizzeria-mario
+        // 2. OBTENER EL ENLACE ÚNICO DEL QR
         const urlParams = new URLSearchParams(window.location.search);
         const restaurantSlug = urlParams.get('menu');
 
         async function loadMenu() {
+            // Si abres el archivo sin ?menu=nombre en la URL
             if (!restaurantSlug) {
                 appDiv.innerHTML = '<div class="error-message">Por favor, escanea un código QR válido.</div>';
                 return;
             }
 
-            // 3. BUSCAR EL RESTAURANTE Y VERIFICAR SI ESTÁ ACTIVO
-            const { data: restaurant, error: restError } = await supabase
+            // 3. BUSCAR EL RESTAURANTE EN LA BASE DE DATOS
+            const { data: restaurant, error: restError } = await db
                 .from('restaurants')
                 .select('*')
                 .eq('slug', restaurantSlug)
                 .single();
 
+            // Si el restaurante no existe o hay un error de conexión
             if (restError || !restaurant) {
                 appDiv.innerHTML = '<div class="error-message">Restaurante no encontrado.</div>';
+                console.error("Error al buscar restaurante:", restError);
                 return;
             }
 
+            // Si desactivaste el restaurante desde tu panel
             if (!restaurant.is_active) {
-                // AQUÍ CANCELAS LA PÁGINA PÚBLICA (Si no pagan o cierran)
                 appDiv.innerHTML = '<div class="error-message">El menú de este establecimiento no se encuentra disponible actualmente.</div>';
                 return;
             }
 
-            // 4. APLICAR EL COLOR DEL CLIENTE
+            // Cambia el color principal del diseño según el cliente
             document.documentElement.style.setProperty('--primary-color', restaurant.theme_color || '#000000');
 
-            // 5. TRAER CATEGORÍAS Y PLATOS
-            const { data: categories } = await supabase
+            // 4. TRAER CATEGORÍAS Y PLATOS
+            const { data: categories, error: catError } = await db
                 .from('categories')
                 .select('*')
                 .eq('restaurant_id', restaurant.id)
                 .order('sort_order', { ascending: true });
 
-            const { data: items } = await supabase
+            const { data: items, error: itemError } = await db
                 .from('menu_items')
                 .select('*')
                 .eq('is_available', true)
                 .order('sort_order', { ascending: true });
 
-            // 6. DIBUJAR LA PÁGINA (RENDERIZADO)
+            // 5. RENDERIZADO (DIBUJAR LA PÁGINA)
             let html = `
                 <div class="header">
                     ${restaurant.logo_url ? `<img src="${restaurant.logo_url}" alt="${restaurant.name}">` : ''}
@@ -191,15 +191,16 @@
             `;
 
             if (categories && categories.length > 0) {
+                // Recorremos cada categoría
                 categories.forEach(category => {
-                    // Filtrar platos de esta categoría
+                    // Filtramos los platos que pertenecen a esta categoría
                     const categoryItems = items.filter(item => item.category_id === category.id);
                     
                     if (categoryItems.length > 0) {
                         html += `<h2 class="category-title">${category.name}</h2>`;
                         
+                        // Recorremos los platos de la categoría
                         categoryItems.forEach(item => {
-                            // Usamos "description" para la descripción e ingredientes.
                             html += `
                                 <div class="menu-item">
                                     <div class="item-info">
@@ -217,11 +218,11 @@
                 html += '<div class="error-message">Este menú aún no tiene platos.</div>';
             }
 
-            html += '</div>';
+            html += '</div>'; // Cerramos el menu-container
             appDiv.innerHTML = html;
         }
 
-        // Iniciar la carga
+        // Iniciar el proceso
         loadMenu();
     </script>
 </body>
