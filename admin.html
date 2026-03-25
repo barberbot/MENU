@@ -2,14 +2,14 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel MOBI - Fábrica de Menús</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Panel MOBI - Creador Mágico</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* ESTILO iOS / APPLE */
         :root {
-            --bg-color: #F2F2F7; /* Gris claro clásico de iOS */
+            --bg-color: #F2F2F7; 
             --card-bg: #FFFFFF;
             --apple-blue: #007AFF;
             --apple-blue-hover: #005ecb;
@@ -17,196 +17,182 @@
             --text-muted: #8E8E93;
             --input-bg: #F2F2F7;
             --success: #34C759;
+            --border-radius: 16px;
         }
 
-        /* Fuente nativa del sistema (San Francisco en Apple) */
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
             background-color: var(--bg-color); 
             margin: 0; 
-            padding: 40px 20px; 
+            padding: 20px 15px; 
             color: var(--text-main);
             -webkit-font-smoothing: antialiased;
         }
 
-        h1 { 
-            text-align: center; 
-            font-weight: 700; 
-            letter-spacing: -0.5px;
-            margin-bottom: 40px; 
-            font-size: 28px;
-        }
-
-        .container { 
-            max-width: 1000px; 
-            margin: 0 auto; 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-            gap: 24px; 
-        }
-
-        /* Tarjetas estilo iOS */
-        .card { 
-            background: var(--card-bg); 
-            padding: 30px; 
-            border-radius: 20px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.04); 
-            transition: transform 0.3s ease;
-        }
-
-        h2 { 
-            margin-top: 0; 
-            font-size: 18px; 
-            font-weight: 600;
-            margin-bottom: 20px;
-            letter-spacing: -0.3px;
-        }
-
-        label { 
-            display: block; 
-            margin-top: 16px; 
-            font-weight: 500; 
-            color: var(--text-muted); 
-            font-size: 13px; 
-            margin-bottom: 6px;
-        }
-
-        /* Inputs y Selects fluidos */
-        input[type="text"], input[type="number"], select, textarea { 
-            width: 100%; 
-            padding: 14px 16px; 
-            background-color: var(--input-bg); 
-            border: 2px solid transparent; 
-            border-radius: 12px; 
-            font-size: 15px; 
-            color: var(--text-main);
-            box-sizing: border-box; 
-            transition: all 0.2s ease;
-            font-family: inherit;
-            appearance: none; /* Quita estilos por defecto del navegador */
-        }
-
-        /* Animación al hacer clic en un input */
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            background-color: #FFFFFF;
-            border-color: var(--apple-blue);
-            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
-        }
-
-        input[type="color"] {
-            width: 100%;
-            height: 46px;
-            border: none;
-            border-radius: 12px;
-            background-color: var(--input-bg);
-            padding: 5px;
-            cursor: pointer;
-        }
-
-        /* Botón estilo iOS */
-        button { 
-            margin-top: 24px; 
-            width: 100%; 
-            padding: 16px; 
-            background-color: var(--apple-blue); 
-            color: white; 
-            border: none; 
-            border-radius: 14px; 
-            font-size: 16px; 
-            font-weight: 600; 
-            letter-spacing: -0.2px;
-            cursor: pointer; 
-            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1); 
-        }
-
-        /* Efecto de presionar el botón (fluidez) */
-        button:hover { background-color: var(--apple-blue-hover); }
-        button:active { transform: scale(0.97); opacity: 0.9; }
-
-        /* Mensajes de éxito elegantes */
-        .success-msg { 
-            color: var(--success); 
-            font-size: 14px; 
-            margin-top: 15px; 
+        .header-app {
             text-align: center;
-            font-weight: 500; 
-            opacity: 0;
-            transform: translateY(-10px);
-            transition: all 0.3s ease;
+            margin-bottom: 25px;
         }
 
-        .success-msg.show {
-            opacity: 1;
-            transform: translateY(0);
+        .header-app h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+        .header-app p { margin: 5px 0 0 0; color: var(--text-muted); font-size: 14px; }
+
+        /* Contenedor del Wizard */
+        .wizard-container { 
+            max-width: 500px; 
+            margin: 0 auto; 
+            background: var(--card-bg); 
+            padding: 25px 20px; 
+            border-radius: var(--border-radius); 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06); 
+            overflow: hidden;
         }
+
+        /* Control de Pasos */
+        .step { display: none; animation: fadeIn 0.4s ease; }
+        .step.active { display: block; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Indicador de progreso */
+        .progress-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 25px;
+        }
+        .dot {
+            width: 10px; height: 10px; border-radius: 50%; background-color: #D1D1D6; transition: 0.3s;
+        }
+        .dot.active { background-color: var(--apple-blue); width: 20px; border-radius: 10px;}
+
+        h2 { margin-top: 0; font-size: 20px; font-weight: 600; margin-bottom: 20px; text-align: center;}
+
+        label { display: block; margin-top: 15px; font-weight: 500; color: var(--text-muted); font-size: 13px; margin-bottom: 6px; }
+
+        input[type="text"], input[type="number"], select, textarea { 
+            width: 100%; padding: 14px; background-color: var(--input-bg); border: 2px solid transparent; 
+            border-radius: 12px; font-size: 15px; color: var(--text-main); box-sizing: border-box; 
+            appearance: none; transition: 0.2s;
+        }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--apple-blue); background-color: #FFF; }
+        input[type="color"] { width: 100%; height: 46px; border: none; border-radius: 12px; background-color: var(--input-bg); padding: 5px; }
+
+        /* Botones */
+        .btn-primary { 
+            margin-top: 20px; width: 100%; padding: 16px; background-color: var(--apple-blue); color: white; 
+            border: none; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; 
+        }
+        .btn-primary:active { transform: scale(0.97); }
+        
+        .btn-secondary {
+            margin-top: 10px; width: 100%; padding: 16px; background-color: #E5E5EA; color: var(--apple-blue); 
+            border: none; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s;
+        }
+
+        /* Listas temporales */
+        .temp-list {
+            margin-top: 15px; padding: 0; list-style: none;
+        }
+        .temp-list li {
+            background: var(--input-bg); padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; font-size: 14px; display: flex; justify-content: space-between;
+        }
+
+        /* Enlace Final */
+        .final-link-box {
+            background-color: #E5F0FF; border: 2px dashed var(--apple-blue); padding: 20px; border-radius: 12px; text-align: center; margin: 20px 0;
+        }
+        .final-link-box a { color: var(--apple-blue); font-weight: bold; font-size: 18px; text-decoration: none; word-break: break-all;}
     </style>
 </head>
 <body>
 
-    <h1>⚙️ Panel MOBI</h1>
+    <div class="header-app">
+        <h1>⚙️ MOBI Menús</h1>
+        <p>Generador de Páginas</p>
+    </div>
 
-    <div class="container">
+    <div class="wizard-container">
         
-        <div class="card">
-            <h2>1. Crear Restaurante</h2>
-            <form id="form-restaurant">
+        <div class="progress-dots">
+            <div class="dot active" id="dot1"></div>
+            <div class="dot" id="dot2"></div>
+            <div class="dot" id="dot3"></div>
+            <div class="dot" id="dot4"></div>
+        </div>
+
+        <div id="step1" class="step active">
+            <h2>Paso 1: Datos del Negocio</h2>
+            <form id="form-step1">
                 <label>Nombre del Negocio</label>
                 <input type="text" id="rest-name" required placeholder="Ej: Pizzería Mario">
                 
-                <label>Enlace Único (Slug - Sin espacios)</label>
+                <label>Enlace Único (Sin espacios)</label>
                 <input type="text" id="rest-slug" required placeholder="Ej: pizzeria-mario">
                 
-                <label>Color de la Marca</label>
+                <label>Color Principal (Tema)</label>
                 <input type="color" id="rest-color" value="#000000">
                 
                 <label>URL del Logo (Opcional)</label>
-                <input type="text" id="rest-logo" placeholder="https://link-a-su-logo.com/logo.png">
+                <input type="text" id="rest-logo" placeholder="https://link.com/logo.png">
                 
-                <button type="submit">Guardar Restaurante</button>
-                <div id="msg-rest" class="success-msg">✓ Restaurante guardado</div>
+                <button type="submit" class="btn-primary" id="btn-next-1">Siguiente: Categorías ➔</button>
             </form>
         </div>
 
-        <div class="card">
-            <h2>2. Crear Categoría</h2>
-            <form id="form-category">
-                <label>Seleccionar Restaurante</label>
-                <select id="cat-rest-select" required>
-                    <option value="">Cargando restaurantes...</option>
-                </select>
-
-                <label>Nombre de la Categoría</label>
-                <input type="text" id="cat-name" required placeholder="Ej: Pizzas Tradicionales">
-                
-                <button type="submit">Guardar Categoría</button>
-                <div id="msg-cat" class="success-msg">✓ Categoría guardada</div>
+        <div id="step2" class="step">
+            <h2>Paso 2: Categorías</h2>
+            <p style="font-size: 13px; color: var(--text-muted); text-align: center; margin-top:-10px;">Añade secciones (Ej: Bebidas, Postres)</p>
+            
+            <form id="form-step2">
+                <input type="text" id="cat-name" required placeholder="Nombre de categoría...">
+                <button type="submit" class="btn-secondary">+ Añadir Categoría</button>
             </form>
+
+            <ul class="temp-list" id="list-categories"></ul>
+
+            <button type="button" class="btn-primary" onclick="goToStep(3)">Siguiente: Platos ➔</button>
         </div>
 
-        <div class="card">
-            <h2>3. Agregar Plato</h2>
-            <form id="form-item">
-                <label>Seleccionar Categoría</label>
-                <select id="item-cat-select" required>
-                    <option value="">Cargando categorías...</option>
-                </select>
+        <div id="step3" class="step">
+            <h2>Paso 3: Menú y Precios</h2>
+            
+            <form id="form-step3">
+                <label>Categoría</label>
+                <select id="item-cat-select" required></select>
 
-                <label>Nombre del Plato</label>
+                <label>Plato / Producto</label>
                 <input type="text" id="item-name" required placeholder="Ej: Pizza Margarita">
                 
-                <label>Descripción / Ingredientes</label>
-                <textarea id="item-desc" rows="3" placeholder="Salsa de tomate, mozzarella y albahaca..."></textarea>
+                <label>Descripción</label>
+                <textarea id="item-desc" rows="2" placeholder="Ingredientes..."></textarea>
                 
                 <label>Precio ($)</label>
                 <input type="number" step="0.01" id="item-price" required placeholder="Ej: 12.50">
                 
-                <label>URL de la Foto (Opcional)</label>
-                <input type="text" id="item-image" placeholder="https://link-a-foto.com/pizza.jpg">
+                <label>URL Foto (Opcional)</label>
+                <input type="text" id="item-image" placeholder="https://link.com/foto.jpg">
                 
-                <button type="submit">Guardar Plato</button>
-                <div id="msg-item" class="success-msg">✓ Plato guardado</div>
+                <button type="submit" class="btn-secondary">+ Añadir Plato</button>
             </form>
+
+            <ul class="temp-list" id="list-items"></ul>
+
+            <button type="button" class="btn-primary" onclick="goToStep(4)">🚀 Publicar Menú</button>
+        </div>
+
+        <div id="step4" class="step">
+            <h2>¡Menú Publicado! 🎉</h2>
+            <p style="text-align: center; color: var(--text-muted);">Tu página pública ya está activa. Copia este enlace y conviértelo en QR.</p>
+            
+            <div class="final-link-box">
+                <a href="#" id="final-url" target="_blank">Cargando enlace...</a>
+            </div>
+
+            <button type="button" class="btn-secondary" onclick="resetWizard()">Crear otro restaurante</button>
         </div>
 
     </div>
@@ -217,80 +203,111 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kc2lteGFnZGhybGFnanNyZGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODgyMDQsImV4cCI6MjA4OTk2NDIwNH0.wRjw_2l9NgyV1R6M71NIqxkZflGvhWKJ5smcGj5oF1c';
         const db = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // Función para mostrar mensajes de éxito con animación
-        function showSuccess(elementId) {
-            const msg = document.getElementById(elementId);
-            msg.classList.add('show');
-            setTimeout(() => msg.classList.remove('show'), 3000);
+        // VARIABLES GLOBALES DEL WIZARD
+        let currentRestaurantId = null;
+        let currentSlug = null;
+        let categoriesAdded = [];
+
+        // FUNCIÓN PARA MOVER PASOS
+        function goToStep(stepNumber) {
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            document.getElementById('step' + stepNumber).classList.add('active');
+            
+            document.querySelectorAll('.dot').forEach((el, index) => {
+                el.classList.toggle('active', index < stepNumber);
+            });
+
+            // Si llegamos al paso 3, cargar el desplegable de categorías
+            if (stepNumber === 3) {
+                const select = document.getElementById('item-cat-select');
+                select.innerHTML = categoriesAdded.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            }
+
+            // Si llegamos al paso 4, generar el link (asumiendo que index.html y admin.html están en la misma carpeta)
+            if (stepNumber === 4) {
+                // Obtiene la ruta actual de tu navegador y la cambia por index.html
+                const baseUrl = window.location.href.replace('admin.html', 'index.html').split('?')[0];
+                const finalLink = `${baseUrl}?menu=${currentSlug}`;
+                const urlElement = document.getElementById('final-url');
+                urlElement.href = finalLink;
+                urlElement.innerText = finalLink;
+            }
         }
 
-        // CARGAR DESPLEGABLES
-        async function loadRestaurantsDropdown() {
-            const { data, error } = await db.from('restaurants').select('id, name').order('name');
-            const select = document.getElementById('cat-rest-select');
-            select.innerHTML = '<option value="">-- Elige un restaurante --</option>';
-            if(data) data.forEach(r => select.innerHTML += `<option value="${r.id}">${r.name}</option>`);
-        }
-
-        async function loadCategoriesDropdown() {
-            const { data, error } = await db.from('categories').select('id, name, restaurants(name)').order('name');
-            const select = document.getElementById('item-cat-select');
-            select.innerHTML = '<option value="">-- Elige una categoría --</option>';
-            if(data) data.forEach(c => select.innerHTML += `<option value="${c.id}">${c.name} (${c.restaurants.name})</option>`);
-        }
-
-        // GUARDAR RESTAURANTE
-        document.getElementById('form-restaurant').addEventListener('submit', async (e) => {
+        // PASO 1: CREAR RESTAURANTE
+        document.getElementById('form-step1').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const { error } = await db.from('restaurants').insert([{
+            const btn = document.getElementById('btn-next-1');
+            btn.innerText = "Guardando...";
+            
+            currentSlug = document.getElementById('rest-slug').value.toLowerCase().trim();
+
+            // Usamos .select() al final para que Supabase nos devuelva el ID creado
+            const { data, error } = await db.from('restaurants').insert([{
                 name: document.getElementById('rest-name').value,
-                slug: document.getElementById('rest-slug').value.toLowerCase().trim(),
+                slug: currentSlug,
                 theme_color: document.getElementById('rest-color').value,
                 logo_url: document.getElementById('rest-logo').value || null
-            }]);
+            }]).select();
             
-            if(!error) {
-                showSuccess('msg-rest');
-                document.getElementById('form-restaurant').reset();
-                loadRestaurantsDropdown(); 
+            if(!error && data) {
+                currentRestaurantId = data[0].id;
+                goToStep(2);
+            } else { 
+                alert("Error: " + error.message); 
+                btn.innerText = "Siguiente: Categorías ➔";
+            }
+        });
+
+        // PASO 2: AÑADIR CATEGORÍAS
+        document.getElementById('form-step2').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const catName = document.getElementById('cat-name').value;
+            
+            const { data, error } = await db.from('categories').insert([{
+                restaurant_id: currentRestaurantId,
+                name: catName
+            }]).select();
+            
+            if(!error && data) {
+                categoriesAdded.push({ id: data[0].id, name: catName });
+                document.getElementById('list-categories').innerHTML += `<li>${catName} <span>✓</span></li>`;
+                document.getElementById('form-step2').reset();
             } else { alert("Error: " + error.message); }
         });
 
-        // GUARDAR CATEGORÍA
-        document.getElementById('form-category').addEventListener('submit', async (e) => {
+        // PASO 3: AÑADIR PLATOS
+        document.getElementById('form-step3').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const { error } = await db.from('categories').insert([{
-                restaurant_id: document.getElementById('cat-rest-select').value,
-                name: document.getElementById('cat-name').value
-            }]);
+            const itemName = document.getElementById('item-name').value;
+            const price = parseFloat(document.getElementById('item-price').value);
             
-            if(!error) {
-                showSuccess('msg-cat');
-                document.getElementById('form-category').reset();
-                loadCategoriesDropdown(); 
-            } else { alert("Error: " + error.message); }
-        });
-
-        // GUARDAR PLATO
-        document.getElementById('form-item').addEventListener('submit', async (e) => {
-            e.preventDefault();
             const { error } = await db.from('menu_items').insert([{
                 category_id: document.getElementById('item-cat-select').value,
-                name: document.getElementById('item-name').value,
+                name: itemName,
                 description: document.getElementById('item-desc').value,
-                price: parseFloat(document.getElementById('item-price').value),
+                price: price,
                 image_url: document.getElementById('item-image').value || null
             }]);
             
             if(!error) {
-                showSuccess('msg-item');
-                document.getElementById('form-item').reset();
+                document.getElementById('list-items').innerHTML += `<li>${itemName} <span>$${price}</span></li>`;
+                document.getElementById('form-step3').reset();
+                document.getElementById('item-name').focus(); // Mantener teclado abierto en móvil
             } else { alert("Error: " + error.message); }
         });
 
-        // Iniciar carga
-        loadRestaurantsDropdown();
-        loadCategoriesDropdown();
+        // REINICIAR TODO
+        function resetWizard() {
+            currentRestaurantId = null;
+            currentSlug = null;
+            categoriesAdded = [];
+            document.getElementById('form-step1').reset();
+            document.getElementById('list-categories').innerHTML = '';
+            document.getElementById('list-items').innerHTML = '';
+            document.getElementById('btn-next-1').innerText = "Siguiente: Categorías ➔";
+            goToStep(1);
+        }
     </script>
 </body>
 </html>
