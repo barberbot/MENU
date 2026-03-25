@@ -3,25 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Control - Fábrica de Menús</title>
+    <title>Panel MOBI - Fábrica de Menús</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #333; margin-bottom: 30px; }
-        h2 { margin-top: 0; color: #0056b3; font-size: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        label { display: block; margin-top: 15px; font-weight: bold; color: #555; font-size: 14px; }
-        input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        button { margin-top: 20px; width: 100%; padding: 12px; background-color: #0056b3; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background-color: #004494; }
-        .success-msg { color: green; font-size: 14px; margin-top: 10px; display: none; font-weight: bold; }
+        /* ESTILO iOS / APPLE */
+        :root {
+            --bg-color: #F2F2F7; /* Gris claro clásico de iOS */
+            --card-bg: #FFFFFF;
+            --apple-blue: #007AFF;
+            --apple-blue-hover: #005ecb;
+            --text-main: #1C1C1E;
+            --text-muted: #8E8E93;
+            --input-bg: #F2F2F7;
+            --success: #34C759;
+        }
+
+        /* Fuente nativa del sistema (San Francisco en Apple) */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg-color); 
+            margin: 0; 
+            padding: 40px 20px; 
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1 { 
+            text-align: center; 
+            font-weight: 700; 
+            letter-spacing: -0.5px;
+            margin-bottom: 40px; 
+            font-size: 28px;
+        }
+
+        .container { 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 24px; 
+        }
+
+        /* Tarjetas estilo iOS */
+        .card { 
+            background: var(--card-bg); 
+            padding: 30px; 
+            border-radius: 20px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04); 
+            transition: transform 0.3s ease;
+        }
+
+        h2 { 
+            margin-top: 0; 
+            font-size: 18px; 
+            font-weight: 600;
+            margin-bottom: 20px;
+            letter-spacing: -0.3px;
+        }
+
+        label { 
+            display: block; 
+            margin-top: 16px; 
+            font-weight: 500; 
+            color: var(--text-muted); 
+            font-size: 13px; 
+            margin-bottom: 6px;
+        }
+
+        /* Inputs y Selects fluidos */
+        input[type="text"], input[type="number"], select, textarea { 
+            width: 100%; 
+            padding: 14px 16px; 
+            background-color: var(--input-bg); 
+            border: 2px solid transparent; 
+            border-radius: 12px; 
+            font-size: 15px; 
+            color: var(--text-main);
+            box-sizing: border-box; 
+            transition: all 0.2s ease;
+            font-family: inherit;
+            appearance: none; /* Quita estilos por defecto del navegador */
+        }
+
+        /* Animación al hacer clic en un input */
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            background-color: #FFFFFF;
+            border-color: var(--apple-blue);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        }
+
+        input[type="color"] {
+            width: 100%;
+            height: 46px;
+            border: none;
+            border-radius: 12px;
+            background-color: var(--input-bg);
+            padding: 5px;
+            cursor: pointer;
+        }
+
+        /* Botón estilo iOS */
+        button { 
+            margin-top: 24px; 
+            width: 100%; 
+            padding: 16px; 
+            background-color: var(--apple-blue); 
+            color: white; 
+            border: none; 
+            border-radius: 14px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            letter-spacing: -0.2px;
+            cursor: pointer; 
+            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1); 
+        }
+
+        /* Efecto de presionar el botón (fluidez) */
+        button:hover { background-color: var(--apple-blue-hover); }
+        button:active { transform: scale(0.97); opacity: 0.9; }
+
+        /* Mensajes de éxito elegantes */
+        .success-msg { 
+            color: var(--success); 
+            font-size: 14px; 
+            margin-top: 15px; 
+            text-align: center;
+            font-weight: 500; 
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .success-msg.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body>
 
-    <h1>⚙️ Panel de Control - Menús MOBI</h1>
+    <h1>⚙️ Panel MOBI</h1>
 
     <div class="container">
         
@@ -41,7 +164,7 @@
                 <input type="text" id="rest-logo" placeholder="https://link-a-su-logo.com/logo.png">
                 
                 <button type="submit">Guardar Restaurante</button>
-                <div id="msg-rest" class="success-msg">¡Restaurante guardado!</div>
+                <div id="msg-rest" class="success-msg">✓ Restaurante guardado</div>
             </form>
         </div>
 
@@ -57,7 +180,7 @@
                 <input type="text" id="cat-name" required placeholder="Ej: Pizzas Tradicionales">
                 
                 <button type="submit">Guardar Categoría</button>
-                <div id="msg-cat" class="success-msg">¡Categoría guardada!</div>
+                <div id="msg-cat" class="success-msg">✓ Categoría guardada</div>
             </form>
         </div>
 
@@ -82,7 +205,7 @@
                 <input type="text" id="item-image" placeholder="https://link-a-foto.com/pizza.jpg">
                 
                 <button type="submit">Guardar Plato</button>
-                <div id="msg-item" class="success-msg">¡Plato guardado!</div>
+                <div id="msg-item" class="success-msg">✓ Plato guardado</div>
             </form>
         </div>
 
@@ -94,24 +217,26 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kc2lteGFnZGhybGFnanNyZGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODgyMDQsImV4cCI6MjA4OTk2NDIwNH0.wRjw_2l9NgyV1R6M71NIqxkZflGvhWKJ5smcGj5oF1c';
         const db = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // FUNCIONES PARA CARGAR LOS DESPLEGABLES (DROPDOWNS)
+        // Función para mostrar mensajes de éxito con animación
+        function showSuccess(elementId) {
+            const msg = document.getElementById(elementId);
+            msg.classList.add('show');
+            setTimeout(() => msg.classList.remove('show'), 3000);
+        }
+
+        // CARGAR DESPLEGABLES
         async function loadRestaurantsDropdown() {
             const { data, error } = await db.from('restaurants').select('id, name').order('name');
             const select = document.getElementById('cat-rest-select');
             select.innerHTML = '<option value="">-- Elige un restaurante --</option>';
-            if(data) {
-                data.forEach(r => select.innerHTML += `<option value="${r.id}">${r.name}</option>`);
-            }
+            if(data) data.forEach(r => select.innerHTML += `<option value="${r.id}">${r.name}</option>`);
         }
 
         async function loadCategoriesDropdown() {
-            // Traemos las categorías y el nombre del restaurante para que sea fácil identificar
             const { data, error } = await db.from('categories').select('id, name, restaurants(name)').order('name');
             const select = document.getElementById('item-cat-select');
             select.innerHTML = '<option value="">-- Elige una categoría --</option>';
-            if(data) {
-                data.forEach(c => select.innerHTML += `<option value="${c.id}">${c.name} (${c.restaurants.name})</option>`);
-            }
+            if(data) data.forEach(c => select.innerHTML += `<option value="${c.id}">${c.name} (${c.restaurants.name})</option>`);
         }
 
         // GUARDAR RESTAURANTE
@@ -125,11 +250,10 @@
             }]);
             
             if(!error) {
-                document.getElementById('msg-rest').style.display = 'block';
+                showSuccess('msg-rest');
                 document.getElementById('form-restaurant').reset();
-                setTimeout(() => document.getElementById('msg-rest').style.display = 'none', 3000);
-                loadRestaurantsDropdown(); // Actualizar el desplegable
-            } else { alert("Error al guardar: " + error.message); }
+                loadRestaurantsDropdown(); 
+            } else { alert("Error: " + error.message); }
         });
 
         // GUARDAR CATEGORÍA
@@ -141,11 +265,10 @@
             }]);
             
             if(!error) {
-                document.getElementById('msg-cat').style.display = 'block';
+                showSuccess('msg-cat');
                 document.getElementById('form-category').reset();
-                setTimeout(() => document.getElementById('msg-cat').style.display = 'none', 3000);
-                loadCategoriesDropdown(); // Actualizar el desplegable de platos
-            } else { alert("Error al guardar: " + error.message); }
+                loadCategoriesDropdown(); 
+            } else { alert("Error: " + error.message); }
         });
 
         // GUARDAR PLATO
@@ -160,13 +283,12 @@
             }]);
             
             if(!error) {
-                document.getElementById('msg-item').style.display = 'block';
+                showSuccess('msg-item');
                 document.getElementById('form-item').reset();
-                setTimeout(() => document.getElementById('msg-item').style.display = 'none', 3000);
-            } else { alert("Error al guardar: " + error.message); }
+            } else { alert("Error: " + error.message); }
         });
 
-        // Iniciar cargando los datos en los selectores
+        // Iniciar carga
         loadRestaurantsDropdown();
         loadCategoriesDropdown();
     </script>
