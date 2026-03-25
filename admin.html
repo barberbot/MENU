@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - Fábrica de Menús</title>
+    <link rel="icon" href="data:,">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        h2 { margin-top: 0; color: #0056b3; font-size: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        label { display: block; margin-top: 15px; font-weight: bold; color: #555; font-size: 14px; }
+        input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { margin-top: 20px; width: 100%; padding: 12px; background-color: #0056b3; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background-color: #004494; }
+        .success-msg { color: green; font-size: 14px; margin-top: 10px; display: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>⚙️ Panel de Control - Menús MOBI</h1>
+
+    <div class="container">
+        
+        <div class="card">
+            <h2>1. Crear Restaurante</h2>
+            <form id="form-restaurant">
+                <label>Nombre del Negocio</label>
+                <input type="text" id="rest-name" required placeholder="Ej: Pizzería Mario">
+                
+                <label>Enlace Único (Slug - Sin espacios)</label>
+                <input type="text" id="rest-slug" required placeholder="Ej: pizzeria-mario">
+                
+                <label>Color de la Marca</label>
+                <input type="color" id="rest-color" value="#000000">
+                
+                <label>URL del Logo (Opcional)</label>
+                <input type="text" id="rest-logo" placeholder="https://link-a-su-logo.com/logo.png">
+                
+                <button type="submit">Guardar Restaurante</button>
+                <div id="msg-rest" class="success-msg">¡Restaurante guardado!</div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>2. Crear Categoría</h2>
+            <form id="form-category">
+                <label>Seleccionar Restaurante</label>
+                <select id="cat-rest-select" required>
+                    <option value="">Cargando restaurantes...</option>
+                </select>
+
+                <label>Nombre de la Categoría</label>
+                <input type="text" id="cat-name" required placeholder="Ej: Pizzas Tradicionales">
+                
+                <button type="submit">Guardar Categoría</button>
+                <div id="msg-cat" class="success-msg">¡Categoría guardada!</div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>3. Agregar Plato</h2>
+            <form id="form-item">
+                <label>Seleccionar Categoría</label>
+                <select id="item-cat-select" required>
+                    <option value="">Cargando categorías...</option>
+                </select>
+
+                <label>Nombre del Plato</label>
+                <input type="text" id="item-name" required placeholder="Ej: Pizza Margarita">
+                
+                <label>Descripción / Ingredientes</label>
+                <textarea id="item-desc" rows="3" placeholder="Salsa de tomate, mozzarella y albahaca..."></textarea>
+                
+                <label>Precio ($)</label>
+                <input type="number" step="0.01" id="item-price" required placeholder="Ej: 12.50">
+                
+                <label>URL de la Foto (Opcional)</label>
+                <input type="text" id="item-image" placeholder="https://link-a-foto.com/pizza.jpg">
+                
+                <button type="submit">Guardar Plato</button>
+                <div id="msg-item" class="success-msg">¡Plato guardado!</div>
+            </form>
+        </div>
+
+    </div>
+
+    <script>
+        // CONEXIÓN A SUPABASE
+        const supabaseUrl = 'https://odsimxagdhrlagjsrdla.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kc2lteGFnZGhybGFnanNyZGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODgyMDQsImV4cCI6MjA4OTk2NDIwNH0.wRjw_2l9NgyV1R6M71NIqxkZflGvhWKJ5smcGj5oF1c';
+        const db = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // FUNCIONES PARA CARGAR LOS DESPLEGABLES (DROPDOWNS)
+        async function loadRestaurantsDropdown() {
+            const { data, error } = await db.from('restaurants').select('id, name').order('name');
+            const select = document.getElementById('cat-rest-select');
+            select.innerHTML = '<option value="">-- Elige un restaurante --</option>';
+            if(data) {
+                data.forEach(r => select.innerHTML += `<option value="${r.id}">${r.name}</option>`);
+            }
+        }
+
+        async function loadCategoriesDropdown() {
+            // Traemos las categorías y el nombre del restaurante para que sea fácil identificar
+            const { data, error } = await db.from('categories').select('id, name, restaurants(name)').order('name');
+            const select = document.getElementById('item-cat-select');
+            select.innerHTML = '<option value="">-- Elige una categoría --</option>';
+            if(data) {
+                data.forEach(c => select.innerHTML += `<option value="${c.id}">${c.name} (${c.restaurants.name})</option>`);
+            }
+        }
+
+        // GUARDAR RESTAURANTE
+        document.getElementById('form-restaurant').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const { error } = await db.from('restaurants').insert([{
+                name: document.getElementById('rest-name').value,
+                slug: document.getElementById('rest-slug').value.toLowerCase().trim(),
+                theme_color: document.getElementById('rest-color').value,
+                logo_url: document.getElementById('rest-logo').value || null
+            }]);
+            
+            if(!error) {
+                document.getElementById('msg-rest').style.display = 'block';
+                document.getElementById('form-restaurant').reset();
+                setTimeout(() => document.getElementById('msg-rest').style.display = 'none', 3000);
+                loadRestaurantsDropdown(); // Actualizar el desplegable
+            } else { alert("Error al guardar: " + error.message); }
+        });
+
+        // GUARDAR CATEGORÍA
+        document.getElementById('form-category').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const { error } = await db.from('categories').insert([{
+                restaurant_id: document.getElementById('cat-rest-select').value,
+                name: document.getElementById('cat-name').value
+            }]);
+            
+            if(!error) {
+                document.getElementById('msg-cat').style.display = 'block';
+                document.getElementById('form-category').reset();
+                setTimeout(() => document.getElementById('msg-cat').style.display = 'none', 3000);
+                loadCategoriesDropdown(); // Actualizar el desplegable de platos
+            } else { alert("Error al guardar: " + error.message); }
+        });
+
+        // GUARDAR PLATO
+        document.getElementById('form-item').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const { error } = await db.from('menu_items').insert([{
+                category_id: document.getElementById('item-cat-select').value,
+                name: document.getElementById('item-name').value,
+                description: document.getElementById('item-desc').value,
+                price: parseFloat(document.getElementById('item-price').value),
+                image_url: document.getElementById('item-image').value || null
+            }]);
+            
+            if(!error) {
+                document.getElementById('msg-item').style.display = 'block';
+                document.getElementById('form-item').reset();
+                setTimeout(() => document.getElementById('msg-item').style.display = 'none', 3000);
+            } else { alert("Error al guardar: " + error.message); }
+        });
+
+        // Iniciar cargando los datos en los selectores
+        loadRestaurantsDropdown();
+        loadCategoriesDropdown();
+    </script>
+</body>
+</html>
