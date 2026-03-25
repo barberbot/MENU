@@ -29,26 +29,15 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        .header-app {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
+        .header-app { text-align: center; margin-bottom: 25px; }
         .header-app h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
         .header-app p { margin: 5px 0 0 0; color: var(--text-muted); font-size: 14px; }
 
-        /* Contenedor del Wizard */
         .wizard-container { 
-            max-width: 500px; 
-            margin: 0 auto; 
-            background: var(--card-bg); 
-            padding: 25px 20px; 
-            border-radius: var(--border-radius); 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06); 
-            overflow: hidden;
+            max-width: 500px; margin: 0 auto; background: var(--card-bg); padding: 25px 20px; 
+            border-radius: var(--border-radius); box-shadow: 0 4px 20px rgba(0,0,0,0.06); overflow: hidden;
         }
 
-        /* Control de Pasos */
         .step { display: none; animation: fadeIn 0.4s ease; }
         .step.active { display: block; }
         
@@ -57,20 +46,11 @@
             to { opacity: 1; transform: translateX(0); }
         }
 
-        /* Indicador de progreso */
-        .progress-dots {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 25px;
-        }
-        .dot {
-            width: 10px; height: 10px; border-radius: 50%; background-color: #D1D1D6; transition: 0.3s;
-        }
+        .progress-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 25px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background-color: #D1D1D6; transition: 0.3s; }
         .dot.active { background-color: var(--apple-blue); width: 20px; border-radius: 10px;}
 
         h2 { margin-top: 0; font-size: 20px; font-weight: 600; margin-bottom: 20px; text-align: center;}
-
         label { display: block; margin-top: 15px; font-weight: 500; color: var(--text-muted); font-size: 13px; margin-bottom: 6px; }
 
         input[type="text"], input[type="number"], select, textarea { 
@@ -81,7 +61,6 @@
         input:focus, select:focus, textarea:focus { outline: none; border-color: var(--apple-blue); background-color: #FFF; }
         input[type="color"] { width: 100%; height: 46px; border: none; border-radius: 12px; background-color: var(--input-bg); padding: 5px; }
 
-        /* Botones */
         .btn-primary { 
             margin-top: 20px; width: 100%; padding: 16px; background-color: var(--apple-blue); color: white; 
             border: none; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; 
@@ -93,19 +72,19 @@
             border: none; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s;
         }
 
-        /* Listas temporales */
-        .temp-list {
-            margin-top: 15px; padding: 0; list-style: none;
-        }
+        .temp-list { margin-top: 15px; padding: 0; list-style: none; }
         .temp-list li {
             background: var(--input-bg); padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; font-size: 14px; display: flex; justify-content: space-between;
         }
 
-        /* Enlace Final */
         .final-link-box {
             background-color: #E5F0FF; border: 2px dashed var(--apple-blue); padding: 20px; border-radius: 12px; text-align: center; margin: 20px 0;
         }
         .final-link-box a { color: var(--apple-blue); font-weight: bold; font-size: 18px; text-decoration: none; word-break: break-all;}
+        
+        .restore-notice {
+            background-color: #E5F0FF; color: var(--apple-blue); padding: 10px; border-radius: 8px; text-align: center; font-size: 12px; margin-bottom: 15px; font-weight: bold; display: none;
+        }
     </style>
 </head>
 <body>
@@ -117,6 +96,10 @@
 
     <div class="wizard-container">
         
+        <div id="restore-notice" class="restore-notice">
+            🔄 Sesión anterior recuperada con éxito.
+        </div>
+
         <div class="progress-dots">
             <div class="dot active" id="dot1"></div>
             <div class="dot" id="dot2"></div>
@@ -203,12 +186,34 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kc2lteGFnZGhybGFnanNyZGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODgyMDQsImV4cCI6MjA4OTk2NDIwNH0.wRjw_2l9NgyV1R6M71NIqxkZflGvhWKJ5smcGj5oF1c';
         const db = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // VARIABLES GLOBALES DEL WIZARD
-        let currentRestaurantId = null;
-        let currentSlug = null;
-        let categoriesAdded = [];
+        // MEMORIA DEL NAVEGADOR (Recupera datos si se recarga la página)
+        let currentRestaurantId = localStorage.getItem('wizard_rest_id') || null;
+        let currentSlug = localStorage.getItem('wizard_slug') || null;
+        let categoriesAdded = JSON.parse(localStorage.getItem('wizard_categories')) || [];
+        let itemsAdded = JSON.parse(localStorage.getItem('wizard_items')) || [];
+        let currentStep = parseInt(localStorage.getItem('wizard_step')) || 1;
 
-        // FUNCIÓN PARA MOVER PASOS
+        // AL CARGAR LA PÁGINA: Reconstruir la interfaz si hay una sesión guardada
+        window.addEventListener('DOMContentLoaded', () => {
+            if (currentStep > 1) {
+                document.getElementById('restore-notice').style.display = 'block';
+                setTimeout(() => document.getElementById('restore-notice').style.display = 'none', 4000);
+                
+                // Reconstruir lista visual de categorías
+                categoriesAdded.forEach(c => {
+                    document.getElementById('list-categories').innerHTML += `<li>${c.name} <span>✓</span></li>`;
+                });
+                
+                // Reconstruir lista visual de platos
+                itemsAdded.forEach(i => {
+                    document.getElementById('list-items').innerHTML += `<li>${i.name} <span>$${i.price}</span></li>`;
+                });
+
+                goToStep(currentStep);
+            }
+        });
+
+        // NAVEGACIÓN ENTRE PASOS CON GUARDADO AUTOMÁTICO
         function goToStep(stepNumber) {
             document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
             document.getElementById('step' + stepNumber).classList.add('active');
@@ -217,15 +222,16 @@
                 el.classList.toggle('active', index < stepNumber);
             });
 
-            // Si llegamos al paso 3, cargar el desplegable de categorías
+            // Guardar el paso actual en memoria
+            currentStep = stepNumber;
+            localStorage.setItem('wizard_step', currentStep);
+
             if (stepNumber === 3) {
                 const select = document.getElementById('item-cat-select');
                 select.innerHTML = categoriesAdded.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             }
 
-            // Si llegamos al paso 4, generar el link (asumiendo que index.html y admin.html están en la misma carpeta)
             if (stepNumber === 4) {
-                // Obtiene la ruta actual de tu navegador y la cambia por index.html
                 const baseUrl = window.location.href.replace('admin.html', 'index.html').split('?')[0];
                 const finalLink = `${baseUrl}?menu=${currentSlug}`;
                 const urlElement = document.getElementById('final-url');
@@ -239,10 +245,8 @@
             e.preventDefault();
             const btn = document.getElementById('btn-next-1');
             btn.innerText = "Guardando...";
-            
             currentSlug = document.getElementById('rest-slug').value.toLowerCase().trim();
 
-            // Usamos .select() al final para que Supabase nos devuelva el ID creado
             const { data, error } = await db.from('restaurants').insert([{
                 name: document.getElementById('rest-name').value,
                 slug: currentSlug,
@@ -252,6 +256,10 @@
             
             if(!error && data) {
                 currentRestaurantId = data[0].id;
+                // Guardar datos clave en la memoria del teléfono/PC
+                localStorage.setItem('wizard_rest_id', currentRestaurantId);
+                localStorage.setItem('wizard_slug', currentSlug);
+                btn.innerText = "Siguiente: Categorías ➔";
                 goToStep(2);
             } else { 
                 alert("Error: " + error.message); 
@@ -270,7 +278,10 @@
             }]).select();
             
             if(!error && data) {
+                // Guardar en memoria para proteger ante recargas
                 categoriesAdded.push({ id: data[0].id, name: catName });
+                localStorage.setItem('wizard_categories', JSON.stringify(categoriesAdded));
+                
                 document.getElementById('list-categories').innerHTML += `<li>${catName} <span>✓</span></li>`;
                 document.getElementById('form-step2').reset();
             } else { alert("Error: " + error.message); }
@@ -291,21 +302,35 @@
             }]);
             
             if(!error) {
+                // Guardar visualmente en la memoria
+                itemsAdded.push({ name: itemName, price: price });
+                localStorage.setItem('wizard_items', JSON.stringify(itemsAdded));
+
                 document.getElementById('list-items').innerHTML += `<li>${itemName} <span>$${price}</span></li>`;
                 document.getElementById('form-step3').reset();
-                document.getElementById('item-name').focus(); // Mantener teclado abierto en móvil
+                document.getElementById('item-name').focus(); 
             } else { alert("Error: " + error.message); }
         });
 
-        // REINICIAR TODO
+        // REINICIAR TODO Y LIMPIAR MEMORIA (Para un nuevo cliente)
         function resetWizard() {
+            localStorage.removeItem('wizard_step');
+            localStorage.removeItem('wizard_rest_id');
+            localStorage.removeItem('wizard_slug');
+            localStorage.removeItem('wizard_categories');
+            localStorage.removeItem('wizard_items');
+            
             currentRestaurantId = null;
             currentSlug = null;
             categoriesAdded = [];
+            itemsAdded = [];
+            
             document.getElementById('form-step1').reset();
+            document.getElementById('form-step2').reset();
+            document.getElementById('form-step3').reset();
             document.getElementById('list-categories').innerHTML = '';
             document.getElementById('list-items').innerHTML = '';
-            document.getElementById('btn-next-1').innerText = "Siguiente: Categorías ➔";
+            
             goToStep(1);
         }
     </script>
