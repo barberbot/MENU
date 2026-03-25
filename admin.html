@@ -3,181 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Panel MOBI - Creador Mágico</title>
+    <title>MOBI - Panel de Control</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* ESTILO iOS / APPLE */
+        /* ESTILO iOS */
         :root {
             --bg-color: #F2F2F7; 
             --card-bg: #FFFFFF;
             --apple-blue: #007AFF;
-            --apple-blue-hover: #005ecb;
+            --apple-red: #FF3B30;
+            --apple-green: #34C759;
             --text-main: #1C1C1E;
             --text-muted: #8E8E93;
             --input-bg: #F2F2F7;
-            --success: #34C759;
-            --border-radius: 16px;
         }
 
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background-color: var(--bg-color); 
-            margin: 0; 
-            padding: 20px 15px; 
-            color: var(--text-main);
-            -webkit-font-smoothing: antialiased;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px 15px; color: var(--text-main); -webkit-font-smoothing: antialiased; }
 
-        .header-app { text-align: center; margin-bottom: 25px; }
-        .header-app h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+        .header-app { text-align: center; margin-bottom: 20px; }
+        .header-app h1 { margin: 0; font-size: 24px; font-weight: 700; }
         .header-app p { margin: 5px 0 0 0; color: var(--text-muted); font-size: 14px; }
 
-        .wizard-container { 
-            max-width: 500px; margin: 0 auto; background: var(--card-bg); padding: 25px 20px; 
-            border-radius: var(--border-radius); box-shadow: 0 4px 20px rgba(0,0,0,0.06); overflow: hidden;
-        }
+        /* VISTAS */
+        #wizard-view { display: none; }
+        .view-container { max-width: 500px; margin: 0 auto; }
 
-        .step { display: none; animation: fadeIn 0.4s ease; }
+        /* DASHBOARD & TABS */
+        .tabs { display: flex; background: #E5E5EA; border-radius: 8px; padding: 3px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; text-align: center; padding: 8px 0; border-radius: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); cursor: pointer; border: none; background: transparent; transition: 0.2s; }
+        .tab-btn.active { background: var(--card-bg); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* TARJETAS DE RESTAURANTES */
+        .rest-card { background: var(--card-bg); padding: 15px; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; }
+        .rest-info h3 { margin: 0 0 5px 0; font-size: 16px; }
+        .rest-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
+        .rest-actions button { padding: 8px 12px; border: none; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; }
+        .btn-resume { background: #E5F0FF; color: var(--apple-blue); }
+        .btn-view { background: #E5FBEB; color: var(--apple-green); }
+        .btn-danger { background: #FFEBEB; color: var(--apple-red); margin-top: 5px; }
+
+        /* WIZARD CSS (Similar al anterior) */
+        .wizard-card { background: var(--card-bg); padding: 25px 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+        .step { display: none; animation: fadeIn 0.3s ease; }
         .step.active { display: block; }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateX(10px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        .progress-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 25px; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; background-color: #D1D1D6; transition: 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+        .progress-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background-color: #D1D1D6; }
         .dot.active { background-color: var(--apple-blue); width: 20px; border-radius: 10px;}
-
-        h2 { margin-top: 0; font-size: 20px; font-weight: 600; margin-bottom: 20px; text-align: center;}
-        label { display: block; margin-top: 15px; font-weight: 500; color: var(--text-muted); font-size: 13px; margin-bottom: 6px; }
-
-        input[type="text"], input[type="number"], select, textarea { 
-            width: 100%; padding: 14px; background-color: var(--input-bg); border: 2px solid transparent; 
-            border-radius: 12px; font-size: 15px; color: var(--text-main); box-sizing: border-box; 
-            appearance: none; transition: 0.2s;
-        }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--apple-blue); background-color: #FFF; }
-        input[type="color"] { width: 100%; height: 46px; border: none; border-radius: 12px; background-color: var(--input-bg); padding: 5px; }
-
-        .btn-primary { 
-            margin-top: 20px; width: 100%; padding: 16px; background-color: var(--apple-blue); color: white; 
-            border: none; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; 
-        }
-        .btn-primary:active { transform: scale(0.97); }
         
-        .btn-secondary {
-            margin-top: 10px; width: 100%; padding: 16px; background-color: #E5E5EA; color: var(--apple-blue); 
-            border: none; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s;
-        }
-
-        .temp-list { margin-top: 15px; padding: 0; list-style: none; }
-        .temp-list li {
-            background: var(--input-bg); padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; font-size: 14px; display: flex; justify-content: space-between;
-        }
-
-        .final-link-box {
-            background-color: #E5F0FF; border: 2px dashed var(--apple-blue); padding: 20px; border-radius: 12px; text-align: center; margin: 20px 0;
-        }
-        .final-link-box a { color: var(--apple-blue); font-weight: bold; font-size: 18px; text-decoration: none; word-break: break-all;}
+        h2 { margin-top: 0; font-size: 20px; font-weight: 600; text-align: center; margin-bottom: 15px;}
+        label { display: block; margin-top: 10px; font-weight: 500; color: var(--text-muted); font-size: 13px; margin-bottom: 5px; }
+        input, select, textarea { width: 100%; padding: 12px; background-color: var(--input-bg); border: 2px solid transparent; border-radius: 10px; font-size: 15px; box-sizing: border-box; margin-bottom: 5px; }
+        input:focus, select:focus { border-color: var(--apple-blue); background-color: #FFF; outline: none; }
         
-        .restore-notice {
-            background-color: #E5F0FF; color: var(--apple-blue); padding: 10px; border-radius: 8px; text-align: center; font-size: 12px; margin-bottom: 15px; font-weight: bold; display: none;
-        }
+        .btn-primary { width: 100%; padding: 14px; background: var(--apple-blue); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 15px; }
+        .btn-secondary { width: 100%; padding: 14px; background: #E5E5EA; color: var(--apple-blue); border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        
+        .temp-list { padding: 0; list-style: none; margin-top: 10px; }
+        .temp-list li { background: var(--input-bg); padding: 10px; border-radius: 8px; margin-bottom: 5px; font-size: 14px; display: flex; justify-content: space-between; }
+        
+        .btn-close { background: transparent; color: var(--text-muted); border: none; font-size: 14px; font-weight: bold; cursor: pointer; display: block; margin: 0 auto 20px auto; }
     </style>
 </head>
 <body>
 
     <div class="header-app">
-        <h1>⚙️ MOBI Menús</h1>
-        <p>Generador de Páginas</p>
+        <h1>⚙️ Panel MOBI</h1>
+        <p>Gestor de Menús</p>
     </div>
 
-    <div class="wizard-container">
+    <div id="dashboard-view" class="view-container">
         
-        <div id="restore-notice" class="restore-notice">
-            🔄 Sesión anterior recuperada con éxito.
+        <button class="btn-primary" onclick="startNewMenu()" style="margin-bottom: 20px;">+ Crear Nuevo Menú</button>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('borradores')">Borradores</button>
+            <button class="tab-btn" onclick="switchTab('activos')">Activos</button>
+            <button class="tab-btn" onclick="switchTab('cancelados')">Cancelados</button>
         </div>
 
-        <div class="progress-dots">
-            <div class="dot active" id="dot1"></div>
-            <div class="dot" id="dot2"></div>
-            <div class="dot" id="dot3"></div>
-            <div class="dot" id="dot4"></div>
-        </div>
+        <div id="tab-borradores" class="tab-content active"><p>Cargando borradores...</p></div>
+        <div id="tab-activos" class="tab-content"><p>Cargando menús activos...</p></div>
+        <div id="tab-cancelados" class="tab-content"><p>Cargando menús cancelados...</p></div>
+    </div>
 
-        <div id="step1" class="step active">
-            <h2>Paso 1: Datos del Negocio</h2>
-            <form id="form-step1">
-                <label>Nombre del Negocio</label>
-                <input type="text" id="rest-name" required placeholder="Ej: Pizzería Mario">
-                
-                <label>Enlace Único (Sin espacios)</label>
-                <input type="text" id="rest-slug" required placeholder="Ej: pizzeria-mario">
-                
-                <label>Color Principal (Tema)</label>
-                <input type="color" id="rest-color" value="#000000">
-                
-                <label>URL del Logo (Opcional)</label>
-                <input type="text" id="rest-logo" placeholder="https://link.com/logo.png">
-                
-                <button type="submit" class="btn-primary" id="btn-next-1">Siguiente: Categorías ➔</button>
-            </form>
-        </div>
-
-        <div id="step2" class="step">
-            <h2>Paso 2: Categorías</h2>
-            <p style="font-size: 13px; color: var(--text-muted); text-align: center; margin-top:-10px;">Añade secciones (Ej: Bebidas, Postres)</p>
-            
-            <form id="form-step2">
-                <input type="text" id="cat-name" required placeholder="Nombre de categoría...">
-                <button type="submit" class="btn-secondary">+ Añadir Categoría</button>
-            </form>
-
-            <ul class="temp-list" id="list-categories"></ul>
-
-            <button type="button" class="btn-primary" onclick="goToStep(3)">Siguiente: Platos ➔</button>
-        </div>
-
-        <div id="step3" class="step">
-            <h2>Paso 3: Menú y Precios</h2>
-            
-            <form id="form-step3">
-                <label>Categoría</label>
-                <select id="item-cat-select" required></select>
-
-                <label>Plato / Producto</label>
-                <input type="text" id="item-name" required placeholder="Ej: Pizza Margarita">
-                
-                <label>Descripción</label>
-                <textarea id="item-desc" rows="2" placeholder="Ingredientes..."></textarea>
-                
-                <label>Precio ($)</label>
-                <input type="number" step="0.01" id="item-price" required placeholder="Ej: 12.50">
-                
-                <label>URL Foto (Opcional)</label>
-                <input type="text" id="item-image" placeholder="https://link.com/foto.jpg">
-                
-                <button type="submit" class="btn-secondary">+ Añadir Plato</button>
-            </form>
-
-            <ul class="temp-list" id="list-items"></ul>
-
-            <button type="button" class="btn-primary" onclick="goToStep(4)">🚀 Publicar Menú</button>
-        </div>
-
-        <div id="step4" class="step">
-            <h2>¡Menú Publicado! 🎉</h2>
-            <p style="text-align: center; color: var(--text-muted);">Tu página pública ya está activa. Copia este enlace y conviértelo en QR.</p>
-            
-            <div class="final-link-box">
-                <a href="#" id="final-url" target="_blank">Cargando enlace...</a>
+    <div id="wizard-view" class="view-container">
+        <button class="btn-close" onclick="backToDashboard()">✕ Volver al panel (Se guardará tu progreso)</button>
+        
+        <div class="wizard-card">
+            <div class="progress-dots">
+                <div class="dot active" id="dot1"></div>
+                <div class="dot" id="dot2"></div>
+                <div class="dot" id="dot3"></div>
+                <div class="dot" id="dot4"></div>
             </div>
 
-            <button type="button" class="btn-secondary" onclick="resetWizard()">Crear otro restaurante</button>
-        </div>
+            <div id="step1" class="step active">
+                <h2>1. Datos del Negocio</h2>
+                <form id="form-step1">
+                    <label>Nombre del Negocio</label><input type="text" id="rest-name" required>
+                    <label>Enlace Único</label><input type="text" id="rest-slug" required>
+                    <label>Color Principal</label><input type="color" id="rest-color" value="#000000" style="height:40px; padding:0;">
+                    <label>URL Logo</label><input type="text" id="rest-logo">
+                    <button type="submit" class="btn-primary" id="btn-next-1">Siguiente ➔</button>
+                </form>
+            </div>
 
+            <div id="step2" class="step">
+                <h2>2. Categorías</h2>
+                <form id="form-step2">
+                    <input type="text" id="cat-name" required placeholder="Ej: Bebidas">
+                    <button type="submit" class="btn-secondary">+ Añadir</button>
+                </form>
+                <ul class="temp-list" id="list-categories"></ul>
+                <button class="btn-primary" onclick="goToStep(3)">Siguiente ➔</button>
+            </div>
+
+            <div id="step3" class="step">
+                <h2>3. Platos y Precios</h2>
+                <form id="form-step3">
+                    <select id="item-cat-select" required></select>
+                    <input type="text" id="item-name" required placeholder="Nombre del plato">
+                    <textarea id="item-desc" rows="2" placeholder="Ingredientes..."></textarea>
+                    <input type="number" step="0.01" id="item-price" required placeholder="Precio ($)">
+                    <button type="submit" class="btn-secondary">+ Añadir Plato</button>
+                </form>
+                <ul class="temp-list" id="list-items"></ul>
+                <button class="btn-primary" onclick="publishMenu()">🚀 Publicar Menú</button>
+            </div>
+
+            <div id="step4" class="step">
+                <h2>¡Publicado! 🎉</h2>
+                <p style="text-align:center; font-size:14px;">El menú está activo en tu base de datos.</p>
+                <input type="text" id="final-url" readonly style="text-align:center; color:var(--apple-blue); font-weight:bold; margin: 20px 0;">
+                <button class="btn-primary" onclick="backToDashboard()">Ir al Panel de Control</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -186,153 +151,177 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kc2lteGFnZGhybGFnanNyZGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODgyMDQsImV4cCI6MjA4OTk2NDIwNH0.wRjw_2l9NgyV1R6M71NIqxkZflGvhWKJ5smcGj5oF1c';
         const db = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // MEMORIA DEL NAVEGADOR (Recupera datos si se recarga la página)
-        let currentRestaurantId = localStorage.getItem('wizard_rest_id') || null;
-        let currentSlug = localStorage.getItem('wizard_slug') || null;
-        let categoriesAdded = JSON.parse(localStorage.getItem('wizard_categories')) || [];
-        let itemsAdded = JSON.parse(localStorage.getItem('wizard_items')) || [];
-        let currentStep = parseInt(localStorage.getItem('wizard_step')) || 1;
+        // Variables Globales
+        let currentRestId = null;
+        let currentSlug = null;
+        let categoriesAdded = [];
 
-        // AL CARGAR LA PÁGINA: Reconstruir la interfaz si hay una sesión guardada
-        window.addEventListener('DOMContentLoaded', () => {
-            if (currentStep > 1) {
-                document.getElementById('restore-notice').style.display = 'block';
-                setTimeout(() => document.getElementById('restore-notice').style.display = 'none', 4000);
-                
-                // Reconstruir lista visual de categorías
-                categoriesAdded.forEach(c => {
-                    document.getElementById('list-categories').innerHTML += `<li>${c.name} <span>✓</span></li>`;
-                });
-                
-                // Reconstruir lista visual de platos
-                itemsAdded.forEach(i => {
-                    document.getElementById('list-items').innerHTML += `<li>${i.name} <span>$${i.price}</span></li>`;
-                });
+        // --- LÓGICA DEL DASHBOARD --- //
+        
+        async function loadDashboard() {
+            document.getElementById('wizard-view').style.display = 'none';
+            document.getElementById('dashboard-view').style.display = 'block';
 
-                goToStep(currentStep);
-            }
-        });
-
-        // NAVEGACIÓN ENTRE PASOS CON GUARDADO AUTOMÁTICO
-        function goToStep(stepNumber) {
-            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
-            document.getElementById('step' + stepNumber).classList.add('active');
+            const { data: restaurants, error } = await db.from('restaurants').select('*').order('created_at', { ascending: false });
             
-            document.querySelectorAll('.dot').forEach((el, index) => {
-                el.classList.toggle('active', index < stepNumber);
-            });
+            let htmlBorradores = '', htmlActivos = '', htmlCancelados = '';
 
-            // Guardar el paso actual en memoria
-            currentStep = stepNumber;
-            localStorage.setItem('wizard_step', currentStep);
+            if(restaurants) {
+                restaurants.forEach(r => {
+                    // Si el estado es null o borrador, va a borradores.
+                    const estado = r.estado || 'borrador'; 
+                    const baseUrl = window.location.href.replace('admin.html', 'index.html').split('?')[0];
+                    const publicLink = `${baseUrl}?menu=${r.slug}`;
 
-            if (stepNumber === 3) {
-                const select = document.getElementById('item-cat-select');
-                select.innerHTML = categoriesAdded.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                    const card = `
+                        <div class="rest-card">
+                            <div class="rest-info">
+                                <h3>${r.name}</h3>
+                                <p>Slug: /${r.slug}</p>
+                            </div>
+                            <div class="rest-actions">
+                                ${estado === 'borrador' ? `<button class="btn-resume" onclick="resumeDraft('${r.id}', '${r.slug}', '${r.name}')">✏️ Continuar</button>` : ''}
+                                ${estado === 'activo' ? `
+                                    <a href="${publicLink}" target="_blank"><button class="btn-view">👁️ Ver Link</button></a>
+                                    <button class="btn-danger" onclick="changeStatus('${r.id}', 'cancelado', false)">Cancelar</button>
+                                ` : ''}
+                                ${estado === 'cancelado' ? `<button class="btn-resume" onclick="changeStatus('${r.id}', 'activo', true)">♻️ Reactivar</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+
+                    if (estado === 'borrador') htmlBorradores += card;
+                    else if (estado === 'activo') htmlActivos += card;
+                    else if (estado === 'cancelado') htmlCancelados += card;
+                });
             }
 
-            if (stepNumber === 4) {
-                const baseUrl = window.location.href.replace('admin.html', 'index.html').split('?')[0];
-                const finalLink = `${baseUrl}?menu=${currentSlug}`;
-                const urlElement = document.getElementById('final-url');
-                urlElement.href = finalLink;
-                urlElement.innerText = finalLink;
+            document.getElementById('tab-borradores').innerHTML = htmlBorradores || '<p>No hay borradores.</p>';
+            document.getElementById('tab-activos').innerHTML = htmlActivos || '<p>No hay menús activos.</p>';
+            document.getElementById('tab-cancelados').innerHTML = htmlCancelados || '<p>No hay menús cancelados.</p>';
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        async function changeStatus(id, newStatus, isActive) {
+            if(confirm(`¿Estás seguro de cambiar el estado a ${newStatus}?`)) {
+                await db.from('restaurants').update({ estado: newStatus, is_active: isActive }).eq('id', id);
+                loadDashboard();
             }
         }
 
-        // PASO 1: CREAR RESTAURANTE
+        // --- LÓGICA DEL WIZARD (CREADOR) --- //
+
+        function startNewMenu() {
+            currentRestId = null; currentSlug = null; categoriesAdded = [];
+            document.getElementById('form-step1').reset();
+            document.getElementById('list-categories').innerHTML = '';
+            document.getElementById('list-items').innerHTML = '';
+            document.getElementById('dashboard-view').style.display = 'none';
+            document.getElementById('wizard-view').style.display = 'block';
+            goToStep(1);
+        }
+
+        function backToDashboard() {
+            loadDashboard();
+        }
+
+        async function resumeDraft(id, slug, name) {
+            currentRestId = id;
+            currentSlug = slug;
+            document.getElementById('rest-name').value = name;
+            
+            // Cargar categorías existentes de la base de datos
+            const { data: cats } = await db.from('categories').select('*').eq('restaurant_id', id);
+            categoriesAdded = cats || [];
+            
+            // Dibujar categorías en la lista visual
+            document.getElementById('list-categories').innerHTML = '';
+            categoriesAdded.forEach(c => {
+                document.getElementById('list-categories').innerHTML += `<li>${c.name} <span>✓</span></li>`;
+            });
+
+            document.getElementById('dashboard-view').style.display = 'none';
+            document.getElementById('wizard-view').style.display = 'block';
+            goToStep(2); // Salta directo al paso 2 porque ya existe el negocio
+        }
+
+        function goToStep(stepNum) {
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            document.getElementById('step' + stepNum).classList.add('active');
+            document.querySelectorAll('.dot').forEach((el, index) => el.classList.toggle('active', index < stepNum));
+
+            if (stepNum === 3) {
+                const select = document.getElementById('item-cat-select');
+                select.innerHTML = categoriesAdded.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            }
+        }
+
+        // Guardar Paso 1
         document.getElementById('form-step1').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('btn-next-1');
-            btn.innerText = "Guardando...";
             currentSlug = document.getElementById('rest-slug').value.toLowerCase().trim();
-
+            
             const { data, error } = await db.from('restaurants').insert([{
                 name: document.getElementById('rest-name').value,
                 slug: currentSlug,
                 theme_color: document.getElementById('rest-color').value,
-                logo_url: document.getElementById('rest-logo').value || null
+                logo_url: document.getElementById('rest-logo').value || null,
+                estado: 'borrador',
+                is_active: false // Nace apagado
             }]).select();
             
-            if(!error && data) {
-                currentRestaurantId = data[0].id;
-                // Guardar datos clave en la memoria del teléfono/PC
-                localStorage.setItem('wizard_rest_id', currentRestaurantId);
-                localStorage.setItem('wizard_slug', currentSlug);
-                btn.innerText = "Siguiente: Categorías ➔";
-                goToStep(2);
-            } else { 
-                alert("Error: " + error.message); 
-                btn.innerText = "Siguiente: Categorías ➔";
-            }
+            if(data) { currentRestId = data[0].id; goToStep(2); } 
+            else { alert("Error: " + error.message); }
         });
 
-        // PASO 2: AÑADIR CATEGORÍAS
+        // Guardar Paso 2 (Categorías)
         document.getElementById('form-step2').addEventListener('submit', async (e) => {
             e.preventDefault();
             const catName = document.getElementById('cat-name').value;
-            
-            const { data, error } = await db.from('categories').insert([{
-                restaurant_id: currentRestaurantId,
-                name: catName
-            }]).select();
-            
-            if(!error && data) {
-                // Guardar en memoria para proteger ante recargas
+            const { data, error } = await db.from('categories').insert([{ restaurant_id: currentRestId, name: catName }]).select();
+            if(data) {
                 categoriesAdded.push({ id: data[0].id, name: catName });
-                localStorage.setItem('wizard_categories', JSON.stringify(categoriesAdded));
-                
                 document.getElementById('list-categories').innerHTML += `<li>${catName} <span>✓</span></li>`;
                 document.getElementById('form-step2').reset();
-            } else { alert("Error: " + error.message); }
+            }
         });
 
-        // PASO 3: AÑADIR PLATOS
+        // Guardar Paso 3 (Platos)
         document.getElementById('form-step3').addEventListener('submit', async (e) => {
             e.preventDefault();
             const itemName = document.getElementById('item-name').value;
             const price = parseFloat(document.getElementById('item-price').value);
-            
             const { error } = await db.from('menu_items').insert([{
                 category_id: document.getElementById('item-cat-select').value,
                 name: itemName,
                 description: document.getElementById('item-desc').value,
-                price: price,
-                image_url: document.getElementById('item-image').value || null
+                price: price
             }]);
-            
             if(!error) {
-                // Guardar visualmente en la memoria
-                itemsAdded.push({ name: itemName, price: price });
-                localStorage.setItem('wizard_items', JSON.stringify(itemsAdded));
-
                 document.getElementById('list-items').innerHTML += `<li>${itemName} <span>$${price}</span></li>`;
                 document.getElementById('form-step3').reset();
-                document.getElementById('item-name').focus(); 
-            } else { alert("Error: " + error.message); }
+                document.getElementById('item-name').focus();
+            }
         });
 
-        // REINICIAR TODO Y LIMPIAR MEMORIA (Para un nuevo cliente)
-        function resetWizard() {
-            localStorage.removeItem('wizard_step');
-            localStorage.removeItem('wizard_rest_id');
-            localStorage.removeItem('wizard_slug');
-            localStorage.removeItem('wizard_categories');
-            localStorage.removeItem('wizard_items');
+        // Paso 4 (Publicar)
+        async function publishMenu() {
+            // Cambiamos el estado en Supabase a "activo" y encendemos is_active
+            await db.from('restaurants').update({ estado: 'activo', is_active: true }).eq('id', currentRestId);
             
-            currentRestaurantId = null;
-            currentSlug = null;
-            categoriesAdded = [];
-            itemsAdded = [];
-            
-            document.getElementById('form-step1').reset();
-            document.getElementById('form-step2').reset();
-            document.getElementById('form-step3').reset();
-            document.getElementById('list-categories').innerHTML = '';
-            document.getElementById('list-items').innerHTML = '';
-            
-            goToStep(1);
+            const baseUrl = window.location.href.replace('admin.html', 'index.html').split('?')[0];
+            document.getElementById('final-url').value = `${baseUrl}?menu=${currentSlug}`;
+            goToStep(4);
         }
+
+        // Iniciar
+        loadDashboard();
     </script>
 </body>
 </html>
