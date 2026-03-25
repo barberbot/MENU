@@ -46,7 +46,7 @@
         .btn-view { background: #E5FBEB; color: var(--apple-green); }
         .btn-danger { background: #FFEBEB; color: var(--apple-red); margin-top: 5px; }
 
-        /* WIZARD CSS (Similar al anterior) */
+        /* WIZARD CSS */
         .wizard-card { background: var(--card-bg); padding: 25px 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
         .step { display: none; animation: fadeIn 0.3s ease; }
         .step.active { display: block; }
@@ -108,7 +108,7 @@
                     <label>Nombre del Negocio</label><input type="text" id="rest-name" required>
                     <label>Enlace Único</label><input type="text" id="rest-slug" required>
                     <label>Color Principal</label><input type="color" id="rest-color" value="#000000" style="height:40px; padding:0;">
-                    <label>URL Logo</label><input type="text" id="rest-logo">
+                    <label>URL Logo</label><input type="text" id="rest-logo" placeholder="https://link.com/logo.png">
                     <button type="submit" class="btn-primary" id="btn-next-1">Siguiente ➔</button>
                 </form>
             </div>
@@ -130,6 +130,9 @@
                     <input type="text" id="item-name" required placeholder="Nombre del plato">
                     <textarea id="item-desc" rows="2" placeholder="Ingredientes..."></textarea>
                     <input type="number" step="0.01" id="item-price" required placeholder="Precio ($)">
+                    
+                    <input type="text" id="item-image" placeholder="URL de la Foto (Opcional)">
+                    
                     <button type="submit" class="btn-secondary">+ Añadir Plato</button>
                 </form>
                 <ul class="temp-list" id="list-items"></ul>
@@ -168,7 +171,6 @@
 
             if(restaurants) {
                 restaurants.forEach(r => {
-                    // Si el estado es null o borrador, va a borradores.
                     const estado = r.estado || 'borrador'; 
                     const baseUrl = window.location.href.replace('admin.html', 'index.html').split('?')[0];
                     const publicLink = `${baseUrl}?menu=${r.slug}`;
@@ -236,11 +238,9 @@
             currentSlug = slug;
             document.getElementById('rest-name').value = name;
             
-            // Cargar categorías existentes de la base de datos
             const { data: cats } = await db.from('categories').select('*').eq('restaurant_id', id);
             categoriesAdded = cats || [];
             
-            // Dibujar categorías en la lista visual
             document.getElementById('list-categories').innerHTML = '';
             categoriesAdded.forEach(c => {
                 document.getElementById('list-categories').innerHTML += `<li>${c.name} <span>✓</span></li>`;
@@ -248,7 +248,7 @@
 
             document.getElementById('dashboard-view').style.display = 'none';
             document.getElementById('wizard-view').style.display = 'block';
-            goToStep(2); // Salta directo al paso 2 porque ya existe el negocio
+            goToStep(2);
         }
 
         function goToStep(stepNum) {
@@ -273,7 +273,7 @@
                 theme_color: document.getElementById('rest-color').value,
                 logo_url: document.getElementById('rest-logo').value || null,
                 estado: 'borrador',
-                is_active: false // Nace apagado
+                is_active: false
             }]).select();
             
             if(data) { currentRestId = data[0].id; goToStep(2); } 
@@ -292,27 +292,32 @@
             }
         });
 
-        // Guardar Paso 3 (Platos)
+        // Guardar Paso 3 (Platos) CON IMAGEN
         document.getElementById('form-step3').addEventListener('submit', async (e) => {
             e.preventDefault();
             const itemName = document.getElementById('item-name').value;
             const price = parseFloat(document.getElementById('item-price').value);
+            const imageUrl = document.getElementById('item-image').value || null; // Captura la imagen
+            
             const { error } = await db.from('menu_items').insert([{
                 category_id: document.getElementById('item-cat-select').value,
                 name: itemName,
                 description: document.getElementById('item-desc').value,
-                price: price
+                price: price,
+                image_url: imageUrl // Lo guarda en la base de datos
             }]);
+            
             if(!error) {
                 document.getElementById('list-items').innerHTML += `<li>${itemName} <span>$${price}</span></li>`;
                 document.getElementById('form-step3').reset();
                 document.getElementById('item-name').focus();
+            } else {
+                alert("Error al guardar: " + error.message);
             }
         });
 
         // Paso 4 (Publicar)
         async function publishMenu() {
-            // Cambiamos el estado en Supabase a "activo" y encendemos is_active
             await db.from('restaurants').update({ estado: 'activo', is_active: true }).eq('id', currentRestId);
             
             const baseUrl = window.location.href.replace('admin.html', 'index.html').split('?')[0];
